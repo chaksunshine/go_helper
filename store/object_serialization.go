@@ -1,68 +1,60 @@
 package store
 
 import (
-	"encoding/gob"
-	. "github.com/chaksunshine/go_helper/store/dao"
-	"os"
+	"fmt"
+	"github.com/chaksunshine/go_helper/store/dao"
+	"github.com/chaksunshine/go_helper/store/enum"
+	"github.com/chaksunshine/go_helper/store/internel"
 	"time"
 )
 
-// 将对象序列化
+// 对象序列化
 // @author fuzeyu
 type objectSerialization struct {
 }
 
-// 将一个对象序列化到文件中
-// @param filePath 路径地址
-// @param object 序列化对象
-func (this *objectSerialization) encode(filePath string, object interface{}) (bool, error) {
-
-	// 创建打开文件
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0777)
-	if err != nil {
-		return false, err
+// 获取一个存储接口
+// @param rType 存储方式
+func (this *objectSerialization) findType(rType int) internel.StreamStorage {
+	switch rType {
+	case enum.RegisterTypeFile:
+		return new(internel.StreamFile)
 	}
-	defer file.Close()
 
-	// 序列化对象
-	encoder := gob.NewEncoder(file)
-	if err := encoder.Encode(object); err != nil {
-		return false, err
-	}
-	return true, nil
+	panic(fmt.Sprintf("undefined rType in %v", rType))
 }
 
-// 将对象信息写入到文件中
-// @param r 注册对象
-func (this *objectSerialization) writerFile(r Register) {
+// 注册一个需要存储的对象
+// @param rType 存储方式
+// @param register 注册对象
+func (this *objectSerialization) Register(rType int, register dao.Register) {
 
-	ticker := time.NewTicker(r.Second)
-	for {
-		<-ticker.C
-		this.encode(r.FilePath, r.Object)
-	}
+	go func() {
 
+		// 创建流并初始化
+		stream := this.findType(rType)
+		stream.Init(register)
+
+		// 写入数据
+		ticker := time.NewTicker(register.Second)
+		for range ticker.C {
+			err := stream.Writer(register)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}()
 }
 
-// 添加序列化对象
-// @param r 注册对象
-func (this *objectSerialization) Register(r Register) {
-	go this.writerFile(r)
-}
+// 从指定流信息中加载一个对象
+// @param rType 存储方式
+// @param name 存储名
+// @param obj 存储对象
+func (this *objectSerialization) Find(rType int, name string, obj interface{}) interface{} {
 
-// 从文件中反序列化对象
-// @param filePath 文件地址
-// @param object 序列化地址
-func (this *objectSerialization) Find(filePath string, object interface{}) interface{} {
-
-	// 打开文件
-	file, err := os.Open(filePath)
-	if err != nil {
-		return object
+	stream := this.findType(rType)
+	if err := stream.Reader(name, obj); err != nil {
+		panic(err)
 	}
-	defer file.Close()
-
-	// 获取反序列化内容
-	gob.NewDecoder(file).Decode(object)
-	return object
+	return obj
 }
