@@ -62,6 +62,12 @@ func (this *validate) CheckDate(str string) bool {
 	return RegexpDate.MatchString(str)
 }
 
+// 检查是否为md5值
+// @param str 要检查的值
+func (this *validate) CheckMd5(str string) bool {
+	return RegexpMd5.MatchString(str)
+}
+
 // 检查布尔值
 // @return bool
 func (this *validate) CheckBool(val string) bool {

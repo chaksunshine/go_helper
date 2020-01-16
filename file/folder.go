@@ -37,24 +37,24 @@ func ReadFolder(path string, isRecursive bool) []string {
 // 若不存在运行自行创建
 // @param path 文件夹路径
 // @param isCreate 若文件夹不存在，是否自动创建
-func FolderExists(path string, isCreate bool) bool {
+func FolderExists(path string, isCreate bool) (bool, error) {
 	_, err := os.Stat(path)
 	if err != nil {
 		if os.IsExist(err) != false {
-			panic(err)
+			return false, err
 		}
 
 		// 不允许创建
 		// 直接返回false
 		if !isCreate {
-			return false
+			return false, nil
 		}
 
 		// 创建文件
 		err := os.MkdirAll(path, os.ModePerm)
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 	}
-	return true
+	return true, nil
 }

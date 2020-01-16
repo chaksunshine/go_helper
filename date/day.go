@@ -12,10 +12,10 @@ func FirstDaySecond(timestamp int64) time.Time {
 }
 
 // 将一个时间文本转换成时间对象
-// @param layout 时间
-// @param timestamp 日期字符串
+// @param layout 时间戳格式化格式
+// @param timestamp 要转换的字符串
 func ParseDateString(layout string, timestamp string) time.Time {
-	location, e := time.ParseInLocation(layout, timestamp, zhLocalPack)
+	location, e := time.ParseInLocation(layout, timestamp, time.Local)
 	if e != nil {
 		panic(e)
 	}
