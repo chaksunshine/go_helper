@@ -71,7 +71,7 @@ func (this *validate) CheckMd5(str string) bool {
 // 检查布尔值
 // @return bool
 func (this *validate) CheckBool(val string) bool {
-	if val == "yes" || val == "no" {
+	if val == ValidateBoolYes || val == ValidateBoolNo {
 		return true
 	}
 	return false
